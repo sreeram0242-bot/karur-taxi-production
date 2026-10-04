@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000"
+    android:padding="20dp">
+
+    <!-- Top Status Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="24dp">
+
+        <TextView
+            android:id="@+id/tv_duty_status"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="OFFLINE (வேலையில் இல்லை)"
+            android:textColor="#9CA3AF"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tv_wallet_balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="₹450"
+            android:textColor="#FFFFFF"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Wallet Lock Warning Banner -->
+    <LinearLayout
+        android:id="@+id/card_wallet_lock"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#331A0000"
+        android:padding="16dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚠️ WALLET LOCKED / கணக்கு முடக்கப்பட்டது"
+            android:textColor="#EF4444"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Your balance is below -₹300. Recharge to receive new rides."
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:layout_marginTop="4dp" />
+
+        <Button
+            android:id="@+id/btn_recharge_upi"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:text="RECHARGE VIA UPI (₹500)"
+            android:backgroundTint="#FFC107"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:layout_marginTop="10dp" />
+    </LinearLayout>
+
+    <!-- Active Ride HUD Card (Visible when in trip) -->
+    <LinearLayout
+        android:id="@+id/card_active_ride"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="#1E1E1E"
+        android:padding="16dp"
+        android:layout_marginTop="16dp"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="TRIP IN PROGRESS (பயணம் நடைபெறுகிறது)"
+            android:textColor="#2563EB"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <!-- Actions -->
+        <Button
+            android:id="@+id/btn_arrived"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="ARRIVED AT PICKUP (வந்துவிட்டேன்)"
+            android:backgroundTint="#2563EB"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp" />
+
+        <Button
+            android:id="@+id/btn_enter_pin"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="ENTER CUSTOMER PIN (OTP உள்ளிடவும்)"
+            android:backgroundTint="#FFC107"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/btn_complete_trip"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:text="SWIPE TO COMPLETE TRIP (முடிக்கவும்)"
+            android:backgroundTint="#16A34A"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:layout_marginTop="12dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <!-- Giant Tactile GO ONLINE Button -->
+    <Button
+        android:id="@+id/btn_duty_toggle"
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:text="GO ONLINE\n(ஆன்லைன் செல்)"
+        android:backgroundTint="#16A34A"
+        android:textColor="#FFFFFF"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="24dp" />
+
+</LinearLayout>

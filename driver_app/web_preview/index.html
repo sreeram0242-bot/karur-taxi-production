@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Karur Taxi Driver (கரூர் டாக்ஸி ஓட்டுநர்) - Cockpit & Duty HUD</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Noto+Sans+Tamil:wght@400;600;700;900&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="driver.css" />
+</head>
+<body class="driver-body">
+
+  <!-- ================================================================= -->
+  <!-- TOP EXECUTIVE NAVIGATION BAR                                      -->
+  <!-- ================================================================= -->
+  <header class="driver-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <div class="logo-glyph">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 16H9m10 0h3v-3.5a2 2 0 0 0-.6-1.4L18 8h-4.5L11 11H3a1 1 0 0 0-1 1v4h3"/>
+            <circle cx="7" cy="16" r="2"/>
+            <circle cx="17" cy="16" r="2"/>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <span class="brand-name">Karur Taxi Driver</span>
+          <span class="brand-tamil">கரூர் டாக்ஸி ஓட்டுநர்</span>
+        </div>
+      </div>
+
+      <!-- Live GPS & Telemetry Pulse -->
+      <div class="telemetry-pill" id="telemetry-chip">
+        <span class="telemetry-dot offline" id="telemetry-dot"></span>
+        <span class="telemetry-text" id="telemetry-label">GPS Ready • Offline</span>
+      </div>
+    </div>
+
+    <!-- Mode / App Navigation Switcher -->
+    <nav class="app-switcher-tabs">
+      <a href="index.html" class="switch-tab" title="Switch to Passenger App">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        <span>Passenger App</span>
+      </a>
+      <div class="switch-tab active">
+        <span class="tab-badge-phase">Phase 3</span>
+        <span>Driver Cockpit</span>
+      </div>
+    </nav>
+
+    <!-- Header Right Controls -->
+    <div class="header-right">
+      <!-- Device Frame Switcher -->
+      <div class="view-mode-toggle">
+        <button class="toggle-btn" id="view-mode-desktop" title="Full Cockpit View">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Wide</span>
+        </button>
+        <button class="toggle-btn active" id="view-mode-mobile" title="Phone Mount View (Dashboard)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span>Car Mount</span>
+        </button>
+      </div>
+
+      <!-- Quick Audio Toggle -->
+      <button class="sound-toggle-btn" id="sound-toggle" title="Toggle Alarm Sound">
+        <svg id="sound-icon-on" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        <svg id="sound-icon-off" class="hidden" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================================================= -->
+  <!-- MAIN WORKSPACE CONTAINER                                          -->
+  <!-- ================================================================= -->
+  <main class="driver-workspace" id="driver-workspace">
+
+    <!-- Leaflet Background Map Canvas -->
+    <div id="driver-map" class="driver-map-canvas"></div>
+
+    <!-- Phone Mount Container (for realistic mobile testing) -->
+    <div class="driver-device-frame" id="device-frame">
+
+      <!-- Driver Phone Screen (OLED Pure Black) -->
+      <div class="driver-screen-container">
+
+        <!-- Status & Driver Profile Ribbon -->
+        <div class="driver-top-ribbon">
+          <div class="driver-profile-pill">
+            <div class="driver-avatar-mini">
+              <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80" alt="Driver Senthil" />
+              <span class="online-indicator-dot" id="driver-status-dot"></span>
+            </div>
+            <div class="driver-meta-text">
+              <span class="driver-name-label">Senthil Kumar</span>
+              <div class="driver-sub-row">
+                <span class="driver-rating">★ 4.94</span>
+                <span class="sub-dot">•</span>
+                <span class="driver-trips-count">1,482 rides</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Monochrome White-and-Black License Badge -->
+          <div class="driver-plate-badge" title="Karur RTO Registered Commercial Cab">
+            TN 47 AJ 4920
+          </div>
+        </div>
+
+        <!-- Metric Insights Bar (Compact 4-column cards) -->
+        <div class="driver-metrics-bar">
+          <div class="metric-card">
+            <span class="metric-caption">Today's Total</span>
+            <span class="metric-value">₹1,280</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-caption">Trips</span>
+            <span class="metric-value">7</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-caption">On Duty</span>
+            <span class="metric-value">4h 12m</span>
+          </div>
+          <div class="metric-card highlight" id="wallet-card">
+            <span class="metric-caption">Wallet Balance</span>
+            <span class="metric-value" id="wallet-balance-val">₹450.00</span>
+          </div>
+        </div>
+
+        <!-- Wallet Simulation / Test Bar (Developer Helper) -->
+        <div class="wallet-simulator-bar">
+          <span class="sim-label">⚡ Wallet Test:</span>
+          <button class="btn-sim-wallet active" id="btn-wallet-normal">₹450 (Normal)</button>
+          <button class="btn-sim-wallet" id="btn-wallet-locked">-₹320 (Locked Safeguard)</button>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- STATE 1: WALLET LOCK BANNER (Visible when balance < -₹300)     -->
+        <!-- ============================================================= -->
+        <div class="wallet-lock-card hidden" id="card-wallet-lock">
+          <div class="lock-card-header">
+            <span class="lock-icon">⚠️</span>
+            <div class="lock-title-col">
+              <span class="lock-title">WALLET LOCKED / கணக்கு முடக்கப்பட்டது</span>
+              <span class="lock-desc">Balance is below -₹300. Recharge via UPI to receive new dispatches.</span>
+            </div>
+          </div>
+          <button class="btn-upi-recharge" id="btn-recharge-upi">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>RECHARGE ₹500 VIA UPI (GPay / PhonePe)</span>
+          </button>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- STATE 2: OFFLINE / ONLINE IDLE STATE                          -->
+        <!-- ============================================================= -->
+        <div class="duty-card-section" id="section-duty-idle">
+          <div class="duty-status-card">
+            <div class="duty-status-left">
+              <span class="duty-state-badge offline" id="badge-duty-state">OFFLINE</span>
+              <span class="duty-state-tamil" id="txt-duty-tamil">வேலையில் இல்லை (Go online to get rides)</span>
+            </div>
+            <div class="duty-quick-info">
+              <span class="zone-pill">Karur Central SEZ</span>
+            </div>
+          </div>
+
+          <!-- 2GB RAM Hardware Resilience & Battery Exemption Pill -->
+          <div class="oem-battery-pill">
+            <div class="battery-icon-dot green"></div>
+            <div class="battery-text">
+              <span class="battery-title">Xiaomi / Vivo / Realme Autostart Active</span>
+              <span class="battery-sub">START_STICKY • WakeLock Held • 4s Ping</span>
+            </div>
+          </div>
+
+          <!-- Dispatch Simulation Quick Trigger -->
+          <div class="simulation-trigger-wrap" id="sim-trigger-row">
+            <button class="btn-trigger-dispatch" id="btn-simulate-dispatch">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>Simulate Incoming Karur Ride Dispatch</span>
+            </button>
+          </div>
+
+          <!-- Giant Tactile 96dp "GO ONLINE" Button -->
+          <button class="btn-giant-duty go-online" id="btn-duty-toggle">
+            <div class="btn-duty-inner">
+              <div class="btn-duty-glow"></div>
+              <span class="btn-duty-en" id="duty-btn-en">GO ONLINE</span>
+              <span class="btn-duty-ta" id="duty-btn-ta">ஆன்லைன் செல்</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- ============================================================= -->
+        <!-- STATE 3: ACTIVE TRIP WORKFLOW HUD                             -->
+        <!-- ============================================================= -->
+        <div class="active-trip-cockpit hidden" id="section-active-trip">
+
+          <!-- Turn-by-Turn Dynamic Navigation Bar -->
+          <div class="nav-direction-bar">
+            <div class="nav-arrow-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+            <div class="nav-text-col">
+              <span class="nav-instruction" id="nav-step-text">Turn right towards Kovai Main Road</span>
+              <span class="nav-distance-eta" id="nav-step-sub">250m • In-route to Pickup Point</span>
+            </div>
+            <div class="nav-speed-badge">⚡ 38 km/h</div>
+          </div>
+
+          <!-- Passenger Info Card with Masked Call -->
+          <div class="passenger-card-cockpit">
+            <div class="passenger-avatar-col">
+              <div class="pass-avatar">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </div>
+            </div>
+            <div class="passenger-details-col">
+              <div class="pass-name-line">
+                <span class="pass-name">Priya Dharshini</span>
+                <span class="pass-rating">★ 4.9</span>
+              </div>
+              <span class="pass-trip-meta">Pickup: Karur Central Bus Stand (Bay 4)</span>
+            </div>
+            <div class="passenger-action-btns">
+              <!-- Masked Cloud Voice Call (Edesy Bridge) -->
+              <button class="btn-circle-action call" id="btn-driver-call" title="Call Passenger via Virtual DID Masked Bridge">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Trip Stage Action 1: ARRIVED AT PICKUP -->
+          <div class="trip-stage-step" id="step-arrived-action">
+            <button class="btn-action-primary blue" id="btn-driver-arrived">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/></svg>
+              <span>ARRIVED AT PICKUP (வந்துவிட்டேன்)</span>
+            </button>
+          </div>
+
+          <!-- Trip Stage Action 2: 4-DIGIT START OTP KEYPAD -->
+          <div class="trip-stage-step hidden" id="step-otp-pad">
+            <div class="otp-keypad-panel">
+              <div class="otp-header">
+                <span class="otp-title">Customer START PIN (தொடங்கு குறியீடு)</span>
+                <span class="otp-desc">Ask passenger for the 4-digit PIN displayed on their screen</span>
+              </div>
+
+              <!-- 4 PIN Digit Display Slots -->
+              <div class="otp-digits-display">
+                <div class="digit-box" id="pin-box-1">•</div>
+                <div class="digit-box" id="pin-box-2">•</div>
+                <div class="digit-box" id="pin-box-3">•</div>
+                <div class="digit-box" id="pin-box-4">•</div>
+              </div>
+
+              <!-- Compact Touch Keypad -->
+              <div class="numeric-keypad-grid">
+                <button class="key-btn" data-key="1">1</button>
+                <button class="key-btn" data-key="2">2</button>
+                <button class="key-btn" data-key="3">3</button>
+                <button class="key-btn" data-key="4">4</button>
+                <button class="key-btn" data-key="5">5</button>
+                <button class="key-btn" data-key="6">6</button>
+                <button class="key-btn" data-key="7">7</button>
+                <button class="key-btn" data-key="8">8</button>
+                <button class="key-btn" data-key="9">9</button>
+                <button class="key-btn special" id="btn-pin-clear">⌫</button>
+                <button class="key-btn" data-key="0">0</button>
+                <button class="key-btn action" id="btn-pin-verify">➔</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Trip Stage Action 3: IN TRIP TO DESTINATION -->
+          <div class="trip-stage-step hidden" id="step-in-trip">
+            <div class="trip-meter-panel">
+              <div class="meter-col">
+                <span class="meter-label">Distance</span>
+                <span class="meter-num" id="live-meter-dist">11.4 km</span>
+              </div>
+              <div class="meter-divider"></div>
+              <div class="meter-col">
+                <span class="meter-label">Duration</span>
+                <span class="meter-num" id="live-meter-time">19 min</span>
+              </div>
+              <div class="meter-divider"></div>
+              <div class="meter-col">
+                <span class="meter-label">Estimated Fare</span>
+                <span class="meter-num highlight">₹135</span>
+              </div>
+            </div>
+
+            <button class="btn-action-primary yellow" id="btn-reached-drop">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+              <span>REACHED DESTINATION (சேருமிடம் அடைந்தது)</span>
+            </button>
+          </div>
+
+          <!-- Trip Stage Action 4: PHYSICAL SWIPE-TO-COMPLETE SLIDER -->
+          <div class="trip-stage-step hidden" id="step-swipe-complete">
+            <div class="toll-summary-pill" id="toll-summary-pill">
+              <span>Toll & Parking added: <strong id="lbl-toll-added">₹0</strong></span>
+              <button class="btn-link-edit" id="btn-edit-toll">Edit</button>
+            </div>
+
+            <div class="swipe-slider-container" id="swipe-container">
+              <div class="swipe-track-fill" id="swipe-fill"></div>
+              <div class="swipe-slider-thumb" id="swipe-thumb">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#000000" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+              </div>
+              <span class="swipe-track-label" id="swipe-label">➔ SWIPE TO COMPLETE TRIP</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: 15-SECOND HIGH-URGENCY DISPATCH FLASH                      -->
+  <!-- ================================================================= -->
+  <div class="dispatch-modal-backdrop hidden" id="modal-dispatch-flash">
+    <div class="dispatch-flash-dialog">
+
+      <!-- Header with Countdown Bar -->
+      <div class="flash-header">
+        <div class="flash-badge-row">
+          <span class="flash-alert-dot"></span>
+          <span class="flash-badge-text">NEW DISPATCH ALERT • புதிய பயணம்</span>
+        </div>
+        <div class="flash-timer-cluster">
+          <span class="flash-timer-num" id="flash-timer-sec">15s</span>
+        </div>
+      </div>
+
+      <!-- Linear High-Contrast Countdown Track -->
+      <div class="flash-countdown-track">
+        <div class="flash-countdown-fill" id="flash-timer-bar"></div>
+      </div>
+
+      <!-- Earnings & Distance Hero -->
+      <div class="flash-hero-card">
+        <div class="flash-earnings-col">
+          <span class="flash-caption">Guaranteed Cash Fare</span>
+          <span class="flash-amount">₹135</span>
+        </div>
+        <div class="flash-distance-col">
+          <span class="flash-dist-badge">850m away</span>
+          <span class="flash-category-tag">Sedan Prime</span>
+        </div>
+      </div>
+
+      <!-- Route Visualizer -->
+      <div class="flash-route-card">
+        <div class="flash-route-point">
+          <span class="route-point-dot green"></span>
+          <div class="route-point-text">
+            <span class="point-label">PICKUP (அழைப்பு இடம்)</span>
+            <span class="point-address">Karur Central Bus Stand (Bay 4)</span>
+          </div>
+        </div>
+        <div class="flash-route-connector"></div>
+        <div class="flash-route-point">
+          <span class="route-point-dot red"></span>
+          <div class="route-point-text">
+            <span class="point-label">DROP (இறங்கும் இடம்)</span>
+            <span class="point-address">Textile Park, Karur (11.4 km • ~19 min)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ergonomic 30% / 70% Split Footer -->
+      <div class="flash-action-split">
+        <button class="btn-flash-decline" id="btn-flash-decline">
+          <span>DECLINE</span>
+          <small>வேண்டாம்</small>
+        </button>
+        <button class="btn-flash-accept" id="btn-flash-accept">
+          <div class="accept-glow"></div>
+          <span>ACCEPT RIDE (ஏற்றுக்கொள்)</span>
+          <small>15s window • Auto-locks seat</small>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: PRE-COMPLETION TOLL & PARKING CHARGES RECEIPT              -->
+  <!-- ================================================================= -->
+  <div class="driver-modal-backdrop hidden" id="modal-toll-parking">
+    <div class="driver-modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title-row">
+        <h3>Toll & Parking Charges</h3>
+        <p>சுங்கச்சாவடி மற்றும் பார்க்கிங் கட்டணம் (if applicable)</p>
+      </div>
+
+      <div class="toll-input-group">
+        <label>Toll Gate Fee (சுங்கக் கட்டணம்):</label>
+        <div class="currency-input-wrap">
+          <span class="curr-symbol">₹</span>
+          <input type="number" id="input-toll" placeholder="0" value="0" />
+        </div>
+      </div>
+
+      <div class="toll-input-group">
+        <label>Station / Airport Parking (பார்க்கிங்):</label>
+        <div class="currency-input-wrap">
+          <span class="curr-symbol">₹</span>
+          <input type="number" id="input-parking" placeholder="0" value="0" />
+        </div>
+      </div>
+
+      <div class="toll-calc-summary">
+        <div class="calc-row">
+          <span>Base Ride Fare:</span>
+          <strong>₹135.00</strong>
+        </div>
+        <div class="calc-row">
+          <span>Additional Charges:</span>
+          <strong id="lbl-calc-extras">₹0.00</strong>
+        </div>
+        <div class="calc-divider"></div>
+        <div class="calc-row total">
+          <span>Final Passenger Payable:</span>
+          <strong id="lbl-calc-total">₹135.00</strong>
+        </div>
+      </div>
+
+      <div class="modal-action-row">
+        <button class="btn-modal-secondary" id="btn-toll-cancel">No Extra Fee</button>
+        <button class="btn-modal-primary" id="btn-toll-save">Confirm & Proceed to Swipe</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: CASH COLLECTION RECEIPT SUMMARY (TRIP COMPLETED)           -->
+  <!-- ================================================================= -->
+  <div class="driver-modal-backdrop hidden" id="modal-cash-receipt">
+    <div class="driver-modal-sheet text-center">
+      <div class="success-check-badge">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 class="receipt-title">Trip Completed!</h2>
+      <p class="receipt-tamil">பயணம் வெற்றிகரமாக முடிந்தது</p>
+
+      <div class="cash-collection-box">
+        <span class="cash-caption">COLLECT CASH FROM PASSENGER</span>
+        <span class="cash-total" id="receipt-cash-total">₹135</span>
+        <span class="cash-sub">ரொக்கமாக பெறவும்</span>
+      </div>
+
+      <div class="receipt-breakdown">
+        <div class="receipt-row">
+          <span>Trip Distance & Fare</span>
+          <span>11.4 km • ₹135.00</span>
+        </div>
+        <div class="receipt-row" id="row-receipt-toll">
+          <span>Toll & Parking Fees</span>
+          <span id="receipt-toll-val">₹0.00</span>
+        </div>
+        <div class="receipt-row commission">
+          <span>Platform Service Fee (Deducted from Wallet)</span>
+          <span>-₹15.00</span>
+        </div>
+      </div>
+
+      <button class="btn-receipt-done" id="btn-receipt-done">
+        DONE & READY FOR NEXT RIDE (அடுத்த பயணம்)
+      </button>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: UPI RECHARGE MODAL (FOR -₹300 WALLET RECOVERY)             -->
+  <!-- ================================================================= -->
+  <div class="driver-modal-backdrop hidden" id="modal-upi-recharge">
+    <div class="driver-modal-sheet text-center">
+      <div class="modal-handle"></div>
+      <h3 style="margin-top:8px;">Instant Wallet Recharge via UPI</h3>
+      <p style="font-size:12px; color:#94A3B8; margin-top:2px;">Google Pay • PhonePe • Paytm • BHIM</p>
+
+      <div class="upi-qr-card">
+        <!-- SVG Vector QR Code Graphic -->
+        <div class="qr-mock-box">
+          <svg width="120" height="120" viewBox="0 0 100 100" fill="#000000">
+            <rect width="100" height="100" fill="#FFFFFF"/>
+            <rect x="10" y="10" width="25" height="25" fill="#000000"/>
+            <rect x="15" y="15" width="15" height="15" fill="#FFFFFF"/>
+            <rect x="18" y="18" width="9" height="9" fill="#000000"/>
+            <rect x="65" y="10" width="25" height="25" fill="#000000"/>
+            <rect x="70" y="15" width="15" height="15" fill="#FFFFFF"/>
+            <rect x="73" y="18" width="9" height="9" fill="#000000"/>
+            <rect x="10" y="65" width="25" height="25" fill="#000000"/>
+            <rect x="15" y="70" width="15" height="15" fill="#FFFFFF"/>
+            <rect x="18" y="73" width="9" height="9" fill="#000000"/>
+            <rect x="45" y="15" width="10" height="30" fill="#000000"/>
+            <rect x="65" y="45" width="25" height="10" fill="#000000"/>
+            <rect x="45" y="65" width="10" height="25" fill="#000000"/>
+            <rect x="65" y="65" width="10" height="10" fill="#000000"/>
+            <rect x="80" y="80" width="10" height="10" fill="#000000"/>
+          </svg>
+        </div>
+        <div class="upi-id-badge">karurtaxi@icici</div>
+        <span class="upi-amount-pill">Amount: ₹500.00</span>
+      </div>
+
+      <div class="modal-action-row" style="margin-top:16px;">
+        <button class="btn-modal-secondary" id="btn-upi-close">Cancel</button>
+        <button class="btn-modal-primary" id="btn-upi-simulate-success">Simulate ₹500 Paid (Instant Unlock)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Pill -->
+  <div class="driver-toast hidden" id="driver-toast"></div>
+
+  <!-- Leaflet JS & App Script -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="driver.js"></script>
+</body>
+</html>

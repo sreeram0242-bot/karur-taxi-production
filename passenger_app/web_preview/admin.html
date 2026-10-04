@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karur Taxi (கரூர் டாக்ஸி) — Operations Command Center</title>
+  <meta name="description" content="Karur Taxi admin operations dashboard: God's Eye live fleet map, manual dispatch desk, tariff engine, and driver KYC approval queue." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900&family=Noto+Sans+Tamil:wght@400;600;700&family=JetBrains+Mono:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+  <div class="admin-shell">
+
+    <!-- ================================================================ -->
+    <!-- LEFT SIDEBAR                                                      -->
+    <!-- ================================================================ -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-glyph">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 16H9m10 0h3v-3.5a2 2 0 0 0-.6-1.4L18 8h-4.5L11 11H3a1 1 0 0 0-1 1v4h3"/>
+            <circle cx="7" cy="16" r="2"/><circle cx="17" cy="16" r="2"/>
+          </svg>
+        </div>
+        <div class="brand-text-col">
+          <span class="brand-en">KARUR TAXI</span>
+          <span class="brand-ta">கரூர் டாக்ஸி மையம்</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-tab="gods-eye" id="nav-gods-eye">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </span>
+          <span class="nav-label">God's Eye Fleet Map</span>
+        </button>
+        <button class="nav-btn" data-tab="manual-dispatch" id="nav-manual-dispatch">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.11 11.5 19.79 19.79 0 0 1 1.05 2.92 2 2 0 0 1 3.01 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+          </span>
+          <span class="nav-label">Manual Dispatch Desk</span>
+        </button>
+        <button class="nav-btn" data-tab="tariff-engine" id="nav-tariff-engine">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </span>
+          <span class="nav-label">Tariff & Geozones</span>
+        </button>
+        <button class="nav-btn" data-tab="kyc-approval" id="nav-kyc-approval">
+          <span class="nav-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </span>
+          <span class="nav-label">Driver KYC Queue</span>
+          <span class="nav-badge" id="kyc-badge">2</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="system-pulse">
+          <span class="pulse-dot green"></span>
+          <div class="pulse-info">
+            <strong>OCI ARM64 Cluster</strong>
+            <small>PostGIS + Redis • 4s Sync Live</small>
+          </div>
+        </div>
+        <div class="system-stats-row">
+          <div class="sstat">
+            <span class="sstat-num" id="live-idle">14</span>
+            <span class="sstat-label">Idle</span>
+          </div>
+          <div class="sstat">
+            <span class="sstat-num blue" id="live-enroute">8</span>
+            <span class="sstat-label">En-Route</span>
+          </div>
+          <div class="sstat">
+            <span class="sstat-num amber" id="live-intrip">19</span>
+            <span class="sstat-label">In-Trip</span>
+          </div>
+        </div>
+        <a href="index.html" class="btn-switch-app">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          <span>Passenger App Preview</span>
+        </a>
+        <a href="driver.html" class="btn-switch-app" style="margin-top: -4px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+          <span>Driver Cockpit HUD</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- ================================================================ -->
+    <!-- MAIN CONTENT AREA                                                -->
+    <!-- ================================================================ -->
+    <div class="main-area">
+
+      <!-- Top Header -->
+      <header class="top-header">
+        <div class="header-left">
+          <h1 id="tab-title">God's Eye Fleet Map</h1>
+          <p id="tab-subtitle">Real-time driver locations and trip states across Karur District</p>
+        </div>
+        <div class="header-right">
+          <div class="header-clock" id="live-clock">--:-- --</div>
+          <div class="header-date" id="live-date">Karur, TN 47</div>
+        </div>
+      </header>
+
+      <!-- ============================================================== -->
+      <!-- TAB 1: GOD'S EYE LIVE FLEET MAP                               -->
+      <!-- ============================================================== -->
+      <section class="tab-pane active" id="tab-gods-eye">
+        <div class="map-full-container">
+          <div id="gods-eye-map"></div>
+
+          <!-- Map Floating Controls Overlay -->
+          <div class="map-overlay-controls">
+            <div class="overlay-filter-group">
+              <label>District / Zone</label>
+              <select id="city-select" class="overlay-select">
+                <option value="karur">Karur Central (கரூர்)</option>
+                <option value="thanthonimalai">Thanthonimalai</option>
+                <option value="kulithalai">Kulithalai (குளித்தலை)</option>
+                <option value="coimbatore">Coimbatore (கோவை)</option>
+                <option value="trichy">Trichy (திருச்சி)</option>
+                <option value="erode">Erode (ஈரோடு)</option>
+                <option value="salem">Salem (சேலம்)</option>
+              </select>
+            </div>
+            <div class="overlay-filter-group">
+              <label>Vehicle Type</label>
+              <select id="vehicle-type-select" class="overlay-select">
+                <option value="all">All Fleet Types</option>
+                <option value="auto">Auto (3-Seater)</option>
+                <option value="mini">Mini / Hatchback</option>
+                <option value="sedan">Sedan Tour</option>
+                <option value="suv">SUV XL</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Fleet Legend -->
+          <div class="map-legend">
+            <div class="legend-item">
+              <span class="legend-dot green"></span><span>Idle</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot blue"></span><span>En-Route</span>
+            </div>
+            <div class="legend-item">
+              <span class="legend-dot amber"></span><span>In-Trip</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- TAB 2: MANUAL DISPATCH DESK                                   -->
+      <!-- ============================================================== -->
+      <section class="tab-pane" id="tab-manual-dispatch">
+        <div class="two-col-grid">
+
+          <!-- Left: Booking Intake Form -->
+          <div class="content-panel">
+            <div class="panel-header-row">
+              <div class="panel-title-col">
+                <h2>Call Center Booking Intake</h2>
+                <p>Manual telephone booking with automatic nearest driver lock</p>
+              </div>
+            </div>
+
+            <form id="manual-booking-form">
+              <div class="field-row two-col">
+                <div class="field-group">
+                  <label>Customer Mobile *</label>
+                  <input type="tel" id="dispatch-phone" class="field-input" placeholder="9840012345" maxlength="10" required />
+                </div>
+                <div class="field-group">
+                  <label>Customer Name</label>
+                  <input type="text" id="dispatch-name" class="field-input" placeholder="Ramanathan A." required />
+                </div>
+              </div>
+
+              <div class="field-row two-col">
+                <div class="field-group">
+                  <label>Pickup Location *</label>
+                  <input type="text" id="dispatch-pickup" class="field-input" placeholder="Karur Central Bus Stand" value="Karur Central Bus Stand" required />
+                </div>
+                <div class="field-group">
+                  <label>Drop Destination *</label>
+                  <input type="text" id="dispatch-drop" class="field-input" placeholder="Trichy Airport (TRZ)" value="Textile Park, Karur" required />
+                </div>
+              </div>
+
+              <div class="field-row two-col">
+                <div class="field-group">
+                  <label>Vehicle Category</label>
+                  <select id="dispatch-category" class="field-input">
+                    <option value="sedan">Sedan Tour (₹18/km)</option>
+                    <option value="auto">Auto (₹14/km)</option>
+                    <option value="mini">Mini / Hatchback (₹16/km)</option>
+                    <option value="suv">SUV XL (₹24/km)</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label>Estimated Distance (km)</label>
+                  <input type="number" id="dispatch-km" class="field-input" value="11.5" step="0.1" min="0" />
+                </div>
+              </div>
+
+              <!-- Calculated Fare Card (Monochrome) -->
+              <div class="fare-calc-card">
+                <div class="fare-calc-left">
+                  <span class="fare-label">Calculated Fare</span>
+                  <span class="fare-amount" id="dispatch-calculated-fare">₹287</span>
+                </div>
+                <div class="fare-calc-right">
+                  <span class="round-trip-badge hidden" id="dispatch-rule-badge">Round-Trip (>10km)</span>
+                  <span class="fare-breakdown" id="fare-breakdown-text">11.5 km × 2 (two-way) × ₹18/km</span>
+                </div>
+              </div>
+
+              <button type="submit" class="btn-dispatch-primary" id="btn-dispatch-submit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="22 2 11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                <span>DISPATCH NEAREST DRIVER ⚡</span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Right: Live Nearest Candidates -->
+          <div class="content-panel">
+            <div class="panel-header-row">
+              <div class="panel-title-col">
+                <h2>Nearest Available Drivers</h2>
+                <p>PostGIS ST_DWithin spatial radius · Auto-ranked by distance</p>
+              </div>
+              <span class="live-tag">LIVE</span>
+            </div>
+
+            <div class="candidate-list" id="candidate-drivers-list">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- TAB 3: TARIFF & GEOZONE ENGINE                               -->
+      <!-- ============================================================== -->
+      <section class="tab-pane" id="tab-tariff-engine">
+        <div class="single-col-panel">
+          <div class="panel-header-row">
+            <div class="panel-title-col">
+              <h2>Tamil Nadu Geozone Polygon & Tariff Configurator</h2>
+              <p>Night surcharge (+25%), outstation round-trip doubling, and per-zone surge multipliers</p>
+            </div>
+            <button class="btn-secondary" id="btn-draw-polygon">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>New Geofence</span>
+            </button>
+          </div>
+
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Zone / District</th>
+                  <th>Category</th>
+                  <th>Base Fare (km)</th>
+                  <th>Per km</th>
+                  <th>Night (10PM–6AM)</th>
+                  <th>Round-Trip >10km</th>
+                  <th>Surge</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Karur Central</strong> <span class="zone-pin">TN 47</span></td>
+                  <td>Auto</td>
+                  <td>₹40 <span class="km-note">(1.8 km)</span></td>
+                  <td>₹14.00</td>
+                  <td><span class="rate-badge">1.25x +25%</span></td>
+                  <td><span class="status-chip active">Enabled</span></td>
+                  <td>1.0×</td>
+                  <td><button class="btn-tbl-edit" onclick="showToast('Edit mode: Karur Auto tariff')">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Karur Central</strong> <span class="zone-pin">TN 47</span></td>
+                  <td>Sedan Tour</td>
+                  <td>₹80 <span class="km-note">(2.0 km)</span></td>
+                  <td>₹18.00</td>
+                  <td><span class="rate-badge">1.25x +25%</span></td>
+                  <td><span class="status-chip active">Enabled</span></td>
+                  <td>1.0×</td>
+                  <td><button class="btn-tbl-edit" onclick="showToast('Edit mode: Karur Sedan tariff')">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Thanthonimalai</strong> <span class="zone-pin">TN 47</span></td>
+                  <td>Mini</td>
+                  <td>₹60 <span class="km-note">(2.0 km)</span></td>
+                  <td>₹16.00</td>
+                  <td><span class="rate-badge">1.25x +25%</span></td>
+                  <td><span class="status-chip active">Enabled</span></td>
+                  <td>1.0×</td>
+                  <td><button class="btn-tbl-edit" onclick="showToast('Edit mode: Thanthonimalai Mini tariff')">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Coimbatore Core</strong> <span class="zone-pin">TN 37</span></td>
+                  <td>Sedan Tour</td>
+                  <td>₹80 <span class="km-note">(2.0 km)</span></td>
+                  <td>₹18.00</td>
+                  <td><span class="rate-badge">1.25x +25%</span></td>
+                  <td><span class="status-chip active">Enabled</span></td>
+                  <td>1.0×</td>
+                  <td><button class="btn-tbl-edit" onclick="showToast('Edit mode: CBE Sedan tariff')">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Trichy Airport Surge</strong> <span class="zone-pin">TN 48</span></td>
+                  <td>Sedan Tour</td>
+                  <td>₹100 <span class="km-note">(2.0 km)</span></td>
+                  <td>₹20.00</td>
+                  <td><span class="rate-badge">1.25x +25%</span></td>
+                  <td><span class="status-chip active">Enabled</span></td>
+                  <td><span class="surge-chip">1.15× Surge</span></td>
+                  <td><button class="btn-tbl-edit" onclick="showToast('Edit mode: Trichy Airport Surge')">Edit</button></td>
+                </tr>
+                <tr>
+                  <td><strong>Karur → Erode Outstation</strong> <span class="zone-pin">TN 47</span></td>
+                  <td>SUV XL</td>
+                  <td>₹120 <span class="km-note">(3.0 km)</span></td>
+                  <td>₹24.00</td>
+                  <td><span class="rate-badge">1.25x +25%</span></td>
+                  <td><span class="status-chip active">Enabled (×2)</span></td>
+                  <td>1.0×</td>
+                  <td><button class="btn-tbl-edit" onclick="showToast('Edit mode: Erode Outstation SUV tariff')">Edit</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================== -->
+      <!-- TAB 4: DRIVER KYC APPROVAL QUEUE                             -->
+      <!-- ============================================================== -->
+      <section class="tab-pane" id="tab-kyc-approval">
+        <div class="single-col-panel">
+          <div class="panel-header-row">
+            <div class="panel-title-col">
+              <h2>Driver KYC Verification Queue</h2>
+              <p>Review Driving License, RC Book, FC Certificate, and Aadhaar — then approve or reject with SMS notification</p>
+            </div>
+            <span class="kyc-count-badge" id="kyc-count-badge">2 Pending</span>
+          </div>
+
+          <div class="kyc-card-list" id="kyc-queue-list">
+
+            <!-- KYC CARD 1 -->
+            <div class="kyc-card" id="kyc-card-1">
+              <div class="kyc-card-left">
+                <div class="kyc-avatar">MR</div>
+                <div class="kyc-person-info">
+                  <span class="kyc-name">Murugan R (முருகன் ர)</span>
+                  <div class="kyc-sub-row">
+                    <span class="kyc-phone">+91 78715 80261</span>
+                    <span class="kyc-badge-vehicle">Auto Rickshaw</span>
+                    <span class="kyc-plate-mono">TN 47 B 8811</span>
+                  </div>
+                  <span class="kyc-submitted-at">Submitted 10 minutes ago • Driving License</span>
+                </div>
+              </div>
+              <div class="kyc-card-right">
+                <div class="kyc-doc-preview">
+                  <div class="doc-icon">📄</div>
+                  <div class="doc-info">
+                    <span class="doc-type">Driving License</span>
+                    <span class="doc-num">TN-59-20180008811</span>
+                  </div>
+                </div>
+                <div class="kyc-actions">
+                  <button class="btn-kyc-reject" onclick="rejectKyc(1)">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <span>Reject + SMS</span>
+                  </button>
+                  <button class="btn-kyc-approve" onclick="approveKyc(1)">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Approve</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- KYC CARD 2 -->
+            <div class="kyc-card" id="kyc-card-2">
+              <div class="kyc-card-left">
+                <div class="kyc-avatar">KS</div>
+                <div class="kyc-person-info">
+                  <span class="kyc-name">Karthikeyan S (கார்த்திகேயன்)</span>
+                  <div class="kyc-sub-row">
+                    <span class="kyc-phone">+91 94425 11207</span>
+                    <span class="kyc-badge-vehicle">Sedan Tour</span>
+                    <span class="kyc-plate-mono">TN 47 C 1204</span>
+                  </div>
+                  <span class="kyc-submitted-at">Submitted 34 minutes ago • RC Book + FC Certificate</span>
+                </div>
+              </div>
+              <div class="kyc-card-right">
+                <div class="kyc-doc-preview">
+                  <div class="doc-icon">📋</div>
+                  <div class="doc-info">
+                    <span class="doc-type">RC Book</span>
+                    <span class="doc-num">TN47C1204 — Valid until Dec 2028</span>
+                  </div>
+                </div>
+                <div class="kyc-actions">
+                  <button class="btn-kyc-reject" onclick="rejectKyc(2)">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    <span>Reject + SMS</span>
+                  </button>
+                  <button class="btn-kyc-approve" onclick="approveKyc(2)">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                    <span>Approve</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Empty State (hidden by default) -->
+          <div class="kyc-empty-state hidden" id="kyc-empty-state">
+            <div class="empty-icon">✓</div>
+            <h3>All KYC Documents Reviewed</h3>
+            <p>No pending driver verification documents. New applications will appear here automatically.</p>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- end .main-area -->
+  </div><!-- end .admin-shell -->
+
+  <!-- ================================================================ -->
+  <!-- DISPATCH CONFIRMED MODAL (Replaces alert() calls)               -->
+  <!-- ================================================================ -->
+  <div class="modal-backdrop hidden" id="modal-dispatch-confirm">
+    <div class="modal-dialog" style="max-width:420px;">
+      <div class="modal-success-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="modal-title">Dispatch Confirmed!</h3>
+      <p class="modal-sub" id="modal-dispatch-text">Nearest driver has been assigned.</p>
+      <div class="modal-driver-card" id="modal-driver-preview">
+        <div class="mdc-left">
+          <span class="mdc-initials">SK</span>
+          <div class="mdc-info">
+            <span class="mdc-name">Senthil Kumar</span>
+            <span class="mdc-meta">Sedan • 0.8 km away • ★ 4.94</span>
+          </div>
+        </div>
+        <span class="mdc-plate" id="mdc-plate">TN 47 AJ 4920</span>
+      </div>
+      <button class="btn-modal-ok" id="btn-dispatch-modal-ok">OK, Done</button>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="admin-toast hidden" id="admin-toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

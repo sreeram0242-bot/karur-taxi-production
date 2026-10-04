@@ -1,0 +1,44 @@
+{
+    # Global options
+    email admin@karurtaxi.com
+}
+
+# 1. Fastify REST & WebSocket API Gateway
+api.karurtaxi.com {
+    reverse_proxy backend:8080 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+
+    # Compress responses for budget 2G/3G Android mobile users
+    encode zstd gzip
+}
+
+# 2. Operations Admin Command Center (God's Eye & Manual Dispatch)
+admin.karurtaxi.com {
+    root * /srv/admin
+    file_server
+    encode zstd gzip
+}
+
+# 3. Passenger & Driver Web Applications
+app.karurtaxi.com {
+    root * /srv/preview
+    file_server
+    encode zstd gzip
+}
+
+# 4. Zero-Cost Geocoding & Routing Gateway
+maps.karurtaxi.com {
+    # Route matching for OSRM
+    handle_path /route/* {
+        reverse_proxy osrm:5000
+    }
+
+    # Geocoding search for Photon
+    handle_path /geocode/* {
+        reverse_proxy photon:2322
+    }
+}

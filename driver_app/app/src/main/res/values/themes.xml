@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.KarurTaxiDriver" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/pure_white</item>
+        <item name="colorOnPrimary">@color/pure_black</item>
+        <item name="colorSecondary">@color/pure_white</item>
+        <item name="colorOnSecondary">@color/pure_black</item>
+        <item name="android:statusBarColor">@color/pure_black</item>
+        <item name="android:navigationBarColor">@color/pure_black</item>
+        <item name="android:windowBackground">@color/pure_black</item>
+    </style>
+</resources>

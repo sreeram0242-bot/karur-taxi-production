@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">Karur Taxi Driver</string>
+    <string name="app_name_tamil">கரூர் டாக்ஸி ஓட்டுநர்</string>
+    <string name="notification_channel_name">Karur Taxi Driver Duty</string>
+    <string name="notification_channel_desc">Maintains high-precision GPS tracking and live dispatch alerts</string>
+    <string name="duty_online">ONLINE (வேலையில் உள்ளீர்கள்)</string>
+    <string name="duty_offline">OFFLINE (வேலையில் இல்லை)</string>
+    <string name="btn_go_online">GO ONLINE\n(ஆன்லைன் செல்)</string>
+    <string name="btn_go_offline">GO OFFLINE\n(ஆஃப்லைன் செல்)</string>
+    <string name="wallet_locked_title">⚠️ WALLET LOCKED / கணக்கு முடக்கப்பட்டது</string>
+    <string name="wallet_locked_desc">Your balance is below -₹300. Recharge to receive new rides.</string>
+</resources>

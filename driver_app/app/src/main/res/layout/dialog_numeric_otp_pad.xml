@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Ask passenger for 4-digit START OTP shown on their screen:"
+        android:textSize="14sp"
+        android:textColor="#333333" />
+
+    <EditText
+        android:id="@+id/et_driver_entered_pin"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:inputType="number"
+        android:maxLength="4"
+        android:gravity="center"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.4"
+        android:hint="••••"
+        android:layout_marginTop="16dp" />
+</LinearLayout>

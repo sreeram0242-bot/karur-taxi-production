@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production build outputs
+dist/
+build/
+.dart_tool/
+
+# Android build outputs
+.gradle/
+app/build/
+*.apk
+*.aab
+
+# Local environment & secrets
+.env
+.env.local
+*.log
+
+# IDE & OS
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+Thumbs.db
+[Dd]esktop.ini
+.DS_Store
+
+# Temporary and simulation data
+osrm-data/
+photon-data/
+scratch/

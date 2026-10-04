@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karur Taxi - Executive Interface</title>
+  
+  <!-- Modern Clean Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Noto+Sans+Tamil:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- Leaflet Map CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body class="mode-desktop">
+
+  <!-- ================================================================= -->
+  <!-- TOP EXECUTIVE NAVIGATION BAR                                      -->
+  <!-- ================================================================= -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <div class="logo-glyph">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 16H9m10 0h3v-3.5a2 2 0 0 0-.6-1.4L18 8h-4.5L11 11H3a1 1 0 0 0-1 1v4h3"/>
+            <circle cx="7" cy="16" r="2"/>
+            <circle cx="17" cy="16" r="2"/>
+          </svg>
+        </div>
+        <div class="brand-title-wrap">
+          <span class="brand-name">Karur Taxi</span>
+          <span class="brand-tamil">கரூர் டாக்ஸி</span>
+        </div>
+      </div>
+
+      <div class="live-status-chip">
+        <span class="pulse-dot"></span>
+        <span class="status-txt">34 Cabs Active • Karur Region</span>
+      </div>
+    </div>
+
+    <!-- Stepper Navigation Tabs (Compact 32px height, 12px font) -->
+    <nav class="stepper-tabs" id="main-stepper">
+      <button class="step-tab active" data-screen="booking">
+        <span class="step-num">1</span>
+        <span class="step-label">Book Ride</span>
+      </button>
+      <button class="step-tab" data-screen="dispatch">
+        <span class="step-num">2</span>
+        <span class="step-label">Dispatch Radar</span>
+      </button>
+      <button class="step-tab" data-screen="tracking">
+        <span class="step-num">3</span>
+        <span class="step-label">Live HUD</span>
+      </button>
+      <a href="driver.html" class="step-tab" style="text-decoration:none;" title="Open Driver Cockpit & Duty HUD">
+        <span class="step-num" style="background:#FFFFFF; color:#090D16;">4</span>
+        <span class="step-label">Driver Cockpit ➔</span>
+      </a>
+      <a href="admin.html" class="step-tab" style="text-decoration:none;" title="Open Admin Operations Command Center">
+        <span class="step-num" style="background:#FFFFFF; color:#090D16;">5</span>
+        <span class="step-label">Admin Ops ➔</span>
+      </a>
+    </nav>
+
+    <!-- Header Right Controls -->
+    <div class="header-right">
+      <!-- View Mode Switcher: Desktop Web vs Mobile Device Frame -->
+      <div class="view-mode-toggle">
+        <button class="toggle-btn active" id="view-mode-desktop" title="Full Web Interface">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          <span>Web View</span>
+        </button>
+        <button class="toggle-btn" id="view-mode-mobile" title="iPhone 16 Pro Frame">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          <span>Mobile App</span>
+        </button>
+      </div>
+
+      <!-- Quick Language Switch -->
+      <button class="lang-pill" id="lang-switch">
+        <span>EN</span>
+        <span class="lang-divider">/</span>
+        <span class="lang-ta">தமிழ்</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================================================================= -->
+  <!-- MAIN WORKSPACE CONTAINER                                          -->
+  <!-- ================================================================= -->
+  <main class="app-workspace" id="app-workspace">
+
+    <!-- Leaflet Full-Bleed Map Canvas -->
+    <div id="main-map" class="main-map-canvas"></div>
+
+    <!-- Center Pickup Crosshair (for interactive pin dragging) -->
+    <div class="center-pin-container" id="center-pin">
+      <div class="pin-tag">
+        <span class="pin-dot"></span> Set Pickup
+      </div>
+      <div class="pin-marker-pin"></div>
+      <div class="pin-shadow"></div>
+    </div>
+
+    <!-- Map Floating Controls (Compass, Re-center, Traffic) -->
+    <div class="map-floating-controls">
+      <button class="map-ctrl-btn" id="btn-recenter" title="Recenter to Karur Central">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="12 2 15 9 12 7 9 9 12 2"/></svg>
+      </button>
+      <button class="map-ctrl-btn" id="btn-sos-floating" title="Emergency SOS">
+        <span class="sos-text">SOS</span>
+      </button>
+    </div>
+
+    <!-- =============================================================== -->
+    <!-- EXECUTIVE FLOATING PANEL (DESKTOP PANEL / MOBILE SHEET)          -->
+    <!-- =============================================================== -->
+    <aside class="panel-card" id="executive-panel">
+
+      <!-- Mobile Drag Handle -->
+      <div class="mobile-sheet-handle"></div>
+
+      <!-- ============================================================= -->
+      <!-- SCREEN 1: RIDE BOOKING PANEL                                  -->
+      <!-- ============================================================= -->
+      <div class="panel-screen active" id="screen-booking">
+        <!-- Panel Header -->
+        <div class="panel-header-row">
+          <div>
+            <h1 class="panel-title">Choose a Ride</h1>
+            <p class="panel-subtitle">Transparent rates • Zero surge guarantee</p>
+          </div>
+          <div class="region-pill">
+            <span class="live-dot-green"></span>
+            <span>Karur Active</span>
+          </div>
+        </div>
+
+        <!-- Route Origin & Destination Selector -->
+        <div class="route-box">
+          <div class="route-line-decor">
+            <span class="dot-origin"></span>
+            <span class="connector-line"></span>
+            <span class="sq-dest"></span>
+          </div>
+          <div class="route-inputs">
+            <div class="input-row">
+              <label class="input-label">PICKUP</label>
+              <input type="text" class="route-input" id="input-pickup" value="Karur Central Bus Stand" />
+            </div>
+            <div class="divider-hairline"></div>
+            <div class="input-row">
+              <label class="input-label">DESTINATION</label>
+              <input type="text" class="route-input" id="input-drop" placeholder="Where to in Karur? (எங்கு செல்ல வேண்டும்?)" value="Textile Park, Karur" />
+            </div>
+          </div>
+          <button class="btn-swap-locations" id="btn-swap" title="Swap Locations">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+          </button>
+        </div>
+
+        <!-- Trip Summary Bar with Route Traffic & Distance -->
+        <div class="trip-insights-bar">
+          <div class="trip-metric">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>11.4 km • ~19 min</span>
+          </div>
+          <span class="metric-divider">•</span>
+          <div class="trip-traffic">
+            <span class="traffic-dot green"></span>
+            <span>Kovai Rd • Fast</span>
+          </div>
+          <div class="promo-badge-mini" id="btn-view-promo">
+            <span>🏷️ -₹25 APPLIED</span>
+          </div>
+        </div>
+
+        <!-- Landmark Quick Chips -->
+        <div class="landmark-chips-scroll">
+          <button class="chip" data-dest="Railway Station">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="3" width="16" height="16" rx="2"/><path d="M4 11h16"/><path d="M12 3v8"/><circle cx="8" cy="15" r="1"/><circle cx="16" cy="15" r="1"/></svg>
+            <span>Railway Station</span>
+          </button>
+          <button class="chip" data-dest="Thanthonimalai">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18"/><path d="m6 21 6-18 6 18"/></svg>
+            <span>Thanthonimalai</span>
+          </button>
+          <button class="chip" data-dest="Textile SEZ">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Textile Park</span>
+          </button>
+          <button class="chip" data-dest="Pasupatheeswarar">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <span>Pasupatheeswarar</span>
+          </button>
+        </div>
+
+        <!-- VEHICLE CATEGORY CARDS (With Rich Visual Renderings & Micro-Badges) -->
+        <div class="vehicle-list-wrap">
+          
+          <!-- 1. AUTO -->
+          <div class="vehicle-card" data-cat="auto" data-fare="₹48" data-eta="2 min">
+            <div class="veh-graphic-box auto-bg">
+              <!-- Rich Auto SVG Graphic -->
+              <svg width="44" height="34" viewBox="0 0 64 48" fill="none">
+                <rect x="10" y="16" width="38" height="22" rx="4" fill="#0F172A"/>
+                <path d="M12 16L18 6H38L46 16H12Z" fill="#F59E0B"/>
+                <rect x="18" y="9" width="14" height="7" rx="1.5" fill="#38BDF8" fill-opacity="0.85"/>
+                <path d="M46 16L54 26V36H44V26L46 16Z" fill="#E2E8F0"/>
+                <rect x="47" y="19" width="6" height="6" rx="1" fill="#38BDF8" fill-opacity="0.85"/>
+                <circle cx="20" cy="38" r="6" fill="#0A0F1D" stroke="#94A3B8" stroke-width="2"/>
+                <circle cx="20" cy="38" r="2.5" fill="#F8FAFC"/>
+                <circle cx="48" cy="38" r="6" fill="#0A0F1D" stroke="#94A3B8" stroke-width="2"/>
+                <circle cx="48" cy="38" r="2.5" fill="#F8FAFC"/>
+                <circle cx="53" cy="27" r="2" fill="#FBBF24"/>
+              </svg>
+            </div>
+            <div class="veh-info-col">
+              <div class="veh-title-row">
+                <span class="veh-name">Auto</span>
+                <span class="veh-seats">3 seats</span>
+                <span class="badge-mini-accent green">Quick Zip</span>
+              </div>
+              <span class="veh-desc">2 min away • Fast city traffic bypass</span>
+              <div class="veh-perks-row">
+                <span class="perk-tag">Affordable</span>
+                <span class="perk-tag">Meter Rate</span>
+              </div>
+            </div>
+            <div class="veh-price-col">
+              <div class="price-stack">
+                <span class="veh-old-price">₹60</span>
+                <span class="veh-price">₹48</span>
+              </div>
+              <span class="veh-eta-tag">2 min</span>
+            </div>
+          </div>
+
+          <!-- 2. MINI AC -->
+          <div class="vehicle-card" data-cat="mini" data-fare="₹95" data-eta="3 min">
+            <div class="veh-graphic-box mini-bg">
+              <!-- Rich Mini Hatchback SVG -->
+              <svg width="46" height="32" viewBox="0 0 68 46" fill="none">
+                <path d="M12 24L18 12H38L50 20L58 24V34H10V26L12 24Z" fill="#38BDF8"/>
+                <path d="M20 14H36L44 20H18L20 14Z" fill="#0F172A" fill-opacity="0.85"/>
+                <path d="M50 20H56L54 24H48L50 20Z" fill="#0F172A" fill-opacity="0.85"/>
+                <circle cx="22" cy="34" r="6.5" fill="#0A0F1D" stroke="#CBD5E1" stroke-width="2.5"/>
+                <circle cx="22" cy="34" r="2.5" fill="#F8FAFC"/>
+                <circle cx="48" cy="34" r="6.5" fill="#0A0F1D" stroke="#CBD5E1" stroke-width="2.5"/>
+                <circle cx="48" cy="34" r="2.5" fill="#F8FAFC"/>
+                <path d="M56 26H58V29H55L56 26Z" fill="#FEF08A"/>
+              </svg>
+            </div>
+            <div class="veh-info-col">
+              <div class="veh-title-row">
+                <span class="veh-name">Mini AC</span>
+                <span class="veh-seats">4 seats</span>
+                <span class="badge-mini-accent blue">Chilled AC</span>
+              </div>
+              <span class="veh-desc">3 min away • WagonR / Alto K10 AC</span>
+              <div class="veh-perks-row">
+                <span class="perk-tag">AC Included</span>
+                <span class="perk-tag">2 Bags</span>
+              </div>
+            </div>
+            <div class="veh-price-col">
+              <div class="price-stack">
+                <span class="veh-old-price">₹115</span>
+                <span class="veh-price">₹95</span>
+              </div>
+              <span class="veh-eta-tag">3 min</span>
+            </div>
+          </div>
+
+          <!-- 3. SEDAN PRIME (Selected by default) -->
+          <div class="vehicle-card selected" data-cat="sedan" data-fare="₹135" data-eta="3 min">
+            <div class="veh-graphic-box sedan-bg">
+              <!-- Rich Sedan Dzire SVG -->
+              <svg width="48" height="32" viewBox="0 0 72 46" fill="none">
+                <path d="M8 26L16 14H42L54 22L64 26V34H6V28L8 26Z" fill="#FFFFFF"/>
+                <path d="M18 16H38L47 22H15L18 16Z" fill="#0F172A" fill-opacity="0.8"/>
+                <path d="M50 22H60L58 26H48L50 22Z" fill="#0F172A" fill-opacity="0.75"/>
+                <circle cx="20" cy="34" r="7" fill="#0A0F1D" stroke="#94A3B8" stroke-width="2.5"/>
+                <circle cx="20" cy="34" r="3" fill="#F8FAFC"/>
+                <circle cx="52" cy="34" r="7" fill="#0A0F1D" stroke="#94A3B8" stroke-width="2.5"/>
+                <circle cx="52" cy="34" r="3" fill="#F8FAFC"/>
+                <path d="M62 27H65V30H61L62 27Z" fill="#FEF08A"/>
+                <rect x="6" y="27" width="3" height="3" fill="#EF4444"/>
+              </svg>
+            </div>
+            <div class="veh-info-col">
+              <div class="veh-title-row">
+                <span class="veh-name">Sedan Prime</span>
+                <span class="veh-seats">4 seats</span>
+                <span class="badge-gradient-popular">✨ Best Value</span>
+              </div>
+              <span class="veh-desc">3 min away • Swift Dzire / Etios AC</span>
+              <div class="veh-perks-row">
+                <span class="perk-tag highlight">Top Driver</span>
+                <span class="perk-tag">Spacious Legroom</span>
+                <span class="perk-tag">3 Bags</span>
+              </div>
+            </div>
+            <div class="veh-price-col">
+              <div class="price-stack">
+                <span class="veh-old-price">₹160</span>
+                <span class="veh-price">₹135</span>
+              </div>
+              <span class="veh-eta-tag green">3 min</span>
+            </div>
+          </div>
+
+          <!-- 4. SUV XL -->
+          <div class="vehicle-card" data-cat="suv" data-fare="₹210" data-eta="5 min">
+            <div class="veh-graphic-box suv-bg">
+              <!-- Rich SUV Ertiga SVG -->
+              <svg width="48" height="34" viewBox="0 0 72 48" fill="none">
+                <path d="M10 24L16 11H52L62 20L66 26V36H8V26L10 24Z" fill="#334155"/>
+                <path d="M18 13H36V21H15L18 13Z" fill="#0F172A" fill-opacity="0.85"/>
+                <path d="M38 13H50L58 21H38V13Z" fill="#0F172A" fill-opacity="0.85"/>
+                <rect x="22" y="9" width="28" height="2.5" rx="1" fill="#94A3B8"/>
+                <circle cx="20" cy="36" r="7" fill="#0A0F1D" stroke="#E2E8F0" stroke-width="2.5"/>
+                <circle cx="20" cy="36" r="3" fill="#F8FAFC"/>
+                <circle cx="52" cy="36" r="7" fill="#0A0F1D" stroke="#E2E8F0" stroke-width="2.5"/>
+                <circle cx="52" cy="36" r="3" fill="#F8FAFC"/>
+                <path d="M63 28H66V31H62L63 28Z" fill="#FEF08A"/>
+              </svg>
+            </div>
+            <div class="veh-info-col">
+              <div class="veh-title-row">
+                <span class="veh-name">SUV XL</span>
+                <span class="veh-seats">6 seats</span>
+                <span class="badge-mini-accent purple">Family Size</span>
+              </div>
+              <span class="veh-desc">5 min away • Maruti Ertiga / Innova AC</span>
+              <div class="veh-perks-row">
+                <span class="perk-tag">6-7 Passengers</span>
+                <span class="perk-tag">Roof Carrier</span>
+              </div>
+            </div>
+            <div class="veh-price-col">
+              <div class="price-stack">
+                <span class="veh-old-price">₹245</span>
+                <span class="veh-price">₹210</span>
+              </div>
+              <span class="veh-eta-tag">5 min</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Mode & Breakdown Trigger -->
+        <div class="payment-selection-row">
+          <div class="pay-method-pill">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            <span class="pay-label">Cash on Drop</span>
+            <span class="pay-tag-sub">UPI available</span>
+          </div>
+          <button class="btn-text-action" id="btn-fare-breakdown">
+            <span>Fare Breakdown</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+
+        <!-- Primary Request Button -->
+        <button class="btn-primary-cta" id="btn-request-ride">
+          <span id="cta-button-text">Book Sedan Prime • ₹135</span>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+        </button>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- SCREEN 2: DISPATCH & RADAR SEARCH                             -->
+      <!-- ============================================================= -->
+      <div class="panel-screen" id="screen-dispatch">
+        <div class="dispatch-header">
+          <div class="radar-pulse-anim">
+            <span class="ring ring-1"></span>
+            <span class="ring ring-2"></span>
+            <span class="ring ring-3"></span>
+            <div class="radar-center-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+            </div>
+          </div>
+          <h2 class="dispatch-title">Connecting to Nearest Driver</h2>
+          <p class="dispatch-sub">Locking nearest cab via Redis Geo spatial radius around Karur Bus Stand</p>
+        </div>
+
+        <!-- Matching Progress Timeline -->
+        <div class="dispatch-steps">
+          <div class="step-row done">
+            <span class="step-check"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></span>
+            <span class="step-txt">Geofence Confirmed (Karur City SEZ)</span>
+          </div>
+          <div class="step-row active">
+            <span class="step-spinner"></span>
+            <span class="step-txt">Broadcasting to 4 drivers within 3.5 km...</span>
+          </div>
+          <div class="step-row">
+            <span class="step-dot"></span>
+            <span class="step-txt">Securing fixed fare confirmation (₹135)</span>
+          </div>
+        </div>
+
+        <!-- Driver Candidate Match Preview -->
+        <div class="dispatch-candidate-card">
+          <div class="candidate-avatar">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80" alt="Driver" />
+            <span class="driver-ping-dot"></span>
+          </div>
+          <div class="candidate-meta">
+            <div class="candidate-name-row">
+              <span class="candidate-name">Senthil Kumar</span>
+              <span class="star-rating">★ 4.94</span>
+            </div>
+            <span class="candidate-eta">850m away • Maruti Swift Dzire (TN 47 AJ 4920)</span>
+          </div>
+          <span class="candidate-dist">2 min</span>
+        </div>
+
+        <div class="action-pair">
+          <button class="btn-secondary" id="btn-cancel-dispatch">Cancel Request</button>
+          <button class="btn-primary" id="btn-force-assign">Simulate Accept</button>
+        </div>
+      </div>
+
+      <!-- ============================================================= -->
+      <!-- SCREEN 3: 5-LAYER LIVE TRACKING HUD                           -->
+      <!-- ============================================================= -->
+      <div class="panel-screen" id="screen-tracking">
+        
+        <!-- Apple-Maps Style Floating Unified Island -->
+        <div class="tracking-unified-island">
+          <div class="island-top-row">
+            <div class="eta-cluster">
+              <span class="live-beacon-emerald"></span>
+              <span class="eta-highlight">3 MINS</span>
+              <span class="eta-distance">850m away</span>
+            </div>
+            <div class="telemetry-speed-badge">⚡ 38 km/h</div>
+          </div>
+
+          <!-- Dynamic Live Route Progress Bar -->
+          <div class="route-progress-track">
+            <div class="route-progress-fill" style="width: 75%;"></div>
+            <div class="route-car-indicator" style="left: 75%;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#090D16"><polygon points="12 2 19 21 12 17 5 21 12 2"/></svg>
+            </div>
+          </div>
+
+          <!-- Clean Single-Line Status (No awkward wrap!) -->
+          <div class="island-status-line">
+            <span class="status-en">Driver is arriving</span>
+            <span class="status-dot">•</span>
+            <span class="status-ta">ஓட்டுநர் வந்து கொண்டிருக்கிறார்</span>
+          </div>
+        </div>
+
+        <!-- Vehicle Details Banner -->
+        <div class="tracking-vehicle-banner">
+          <div class="veh-banner-left">
+            <div class="veh-mini-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 16H9m10 0h3v-3.5a2 2 0 0 0-.6-1.4L18 8h-4.5L11 11H3a1 1 0 0 0-1 1v4h3"/><circle cx="7" cy="16" r="2"/><circle cx="17" cy="16" r="2"/></svg>
+            </div>
+            <div class="veh-banner-text">
+              <span class="veh-banner-title">Maruti Swift Dzire AC</span>
+              <span class="veh-banner-sub">Sedan Prime • White • Speed: 38 km/h</span>
+            </div>
+          </div>
+          <div class="license-pill">TN 47 AJ 4920</div>
+        </div>
+
+        <!-- Driver Profile Card -->
+        <div class="driver-card-row">
+          <div class="driver-avatar-wrap">
+            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80" alt="Senthil Kumar" class="driver-img" />
+            <span class="driver-badge-verified">
+              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
+          </div>
+          <div class="driver-details">
+            <div class="driver-name-line">
+              <span class="driver-name">Senthil Kumar</span>
+              <span class="driver-lang">தமிழ் / EN</span>
+            </div>
+            <div class="driver-stats">
+              <span class="star-rating">★ 4.94</span>
+              <span class="stats-sep">•</span>
+              <span class="trips-count">1,482 rides</span>
+              <span class="badge-police">Police Verified</span>
+            </div>
+          </div>
+
+          <!-- Direct Actions (Call / Chat) -->
+          <div class="driver-quick-actions">
+            <button class="circle-btn-call" id="btn-masked-call" title="Call Driver (Masked)">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </button>
+            <button class="circle-btn-chat" id="btn-open-chat" title="Chat with Driver">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span class="chat-badge-dot"></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cryptographic Start Ride PIN (With Copy Feedback) -->
+        <div class="otp-compact-box" id="btn-copy-otp" title="Click to copy PIN">
+          <div class="otp-meta-block">
+            <div class="otp-title-line">
+              <span class="otp-title">START PIN</span>
+              <span class="otp-copy-tip">Tap to copy</span>
+            </div>
+            <span class="otp-ta">தொடக்க குறியீடு (வண்டியில் ஏறிய பின் பகிரவும்)</span>
+          </div>
+          <div class="otp-digit-boxes">
+            <span class="otp-cell">4</span>
+            <span class="otp-cell">8</span>
+            <span class="otp-cell">2</span>
+            <span class="otp-cell">1</span>
+          </div>
+        </div>
+
+        <!-- Bottom Actions (Schedule & Cancel) -->
+        <div class="tracking-bottom-actions">
+          <button class="btn-subtle" id="btn-schedule-trip">Schedule Next</button>
+          <button class="btn-danger-subtle" id="btn-cancel-trip">Cancel Ride</button>
+        </div>
+      </div>
+
+    </aside>
+
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- MODAL 1: CUSTOM CANCEL RIDE CONFIRMATION (REPLACES BROWSER ALERT) -->
+  <!-- ================================================================= -->
+  <div class="modal-backdrop" id="modal-cancel-ride">
+    <div class="modal-card">
+      <div class="modal-icon-header rose">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+      </div>
+      <h3 class="modal-title">Cancel Karur Taxi?</h3>
+      <p class="modal-body">
+        Senthil Kumar is already <strong>850m away</strong> and arriving in 2 minutes. Cancellation is <strong>100% FREE</strong> within the first 3 minutes.
+      </p>
+
+      <!-- Reason Chips -->
+      <div class="cancel-reasons-wrap">
+        <span class="reason-chip active">Driver is not moving</span>
+        <span class="reason-chip">Changed pickup spot</span>
+        <span class="reason-chip">Wait time too long</span>
+        <span class="reason-chip">Booked by mistake</span>
+      </div>
+
+      <div class="modal-actions-dual">
+        <button class="btn-modal-action" id="btn-keep-ride">Keep My Ride</button>
+        <button class="btn-modal-secondary cancel-red" id="btn-confirm-cancel-ride">Confirm Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL 2: IN-APP LIVE CHAT WITH DRIVER SENTHIL KUMAR               -->
+  <!-- ================================================================= -->
+  <div class="modal-backdrop" id="modal-chat">
+    <div class="modal-card chat-dialog">
+      <div class="chat-header">
+        <div class="chat-driver-info">
+          <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&auto=format&fit=crop&q=80" alt="Senthil" class="chat-avatar" />
+          <div>
+            <h4 class="chat-name">Senthil Kumar</h4>
+            <span class="chat-status-active">Active now • White Dzire (TN 47 AJ 4920)</span>
+          </div>
+        </div>
+        <button class="btn-close-circle" id="btn-close-chat">&times;</button>
+      </div>
+
+      <div class="chat-messages-container" id="chat-messages">
+        <div class="chat-bubble driver">
+          <p>வணக்கம்! I am near Karur Central Bus Stand main gate with white Dzire and hazard lights on.</p>
+          <span class="bubble-time">09:42 AM</span>
+        </div>
+      </div>
+
+      <!-- Quick Canned Replies -->
+      <div class="chat-quick-replies">
+        <button class="quick-chip" data-msg="I am coming out now!">Coming out now</button>
+        <button class="quick-chip" data-msg="Waiting near the SBI ATM">Near SBI ATM</button>
+        <button class="quick-chip" data-msg="Please turn on AC">Please turn on AC</button>
+      </div>
+
+      <div class="chat-input-row">
+        <input type="text" class="chat-input" id="chat-text-input" placeholder="Type message in Tamil or English..." />
+        <button class="chat-send-btn" id="btn-send-chat">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL 3: FARE BREAKDOWN & PRICE TRANSPARENCY                      -->
+  <!-- ================================================================= -->
+  <div class="modal-backdrop" id="modal-fare-breakdown">
+    <div class="modal-card">
+      <div class="modal-icon-header blue">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      </div>
+      <h3 class="modal-title">Fare Transparency</h3>
+      <p class="modal-body">Guaranteed fixed upfront tariff for Karur Central ➔ Textile SEZ (11.4 km).</p>
+
+      <div class="fare-receipt-table">
+        <div class="receipt-row">
+          <span>Base Minimum Fare (First 3 km)</span>
+          <span class="receipt-val">₹40.00</span>
+        </div>
+        <div class="receipt-row">
+          <span>Distance Fare (8.4 km × ₹11.50)</span>
+          <span class="receipt-val">₹96.60</span>
+        </div>
+        <div class="receipt-row">
+          <span>Platform & Safety Fee</span>
+          <span class="receipt-val">₹3.40</span>
+        </div>
+        <div class="receipt-row discount">
+          <span>🏷️ Promo Discount (TAMPASS25)</span>
+          <span class="receipt-val">-₹25.00</span>
+        </div>
+        <div class="receipt-divider"></div>
+        <div class="receipt-row total">
+          <span>Total Upfront Amount</span>
+          <span class="receipt-total-val" id="receipt-total">₹135.00</span>
+        </div>
+      </div>
+
+      <div class="guarantee-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>Zero Hidden Surge • Guaranteed Final Price</span>
+      </div>
+
+      <button class="btn-modal-action" id="btn-close-fare-modal">Got It</button>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL 4: SECURE MASKED TELEPHONY BRIDGE                           -->
+  <!-- ================================================================= -->
+  <div class="modal-backdrop" id="modal-masked-call">
+    <div class="modal-card">
+      <div class="modal-icon-header emerald">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      </div>
+      <h3 class="modal-title">Masked Voice Bridge</h3>
+      <p class="modal-body">
+        Connecting via Karur virtual trunk <strong class="phone-hl">+91 7969002802</strong>. Please accept the incoming call to bridge directly to Senthil Kumar with total privacy.
+      </p>
+      <div class="modal-body-ta">
+        உங்கள் தொலைபேசி எண் ஓட்டுநருக்கு தெரியாது. வரும் அழைப்பை ஏற்கவும்.
+      </div>
+      <button class="btn-modal-action" id="btn-close-call-modal">Understood</button>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL 5: EMERGENCY SOS DISPATCH                                   -->
+  <!-- ================================================================= -->
+  <div class="modal-backdrop" id="modal-sos">
+    <div class="modal-card">
+      <div class="modal-icon-header rose">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      </div>
+      <h3 class="modal-title">Emergency Response</h3>
+      <p class="modal-body">
+        Broadcasting live encrypted GPS telemetry to <strong>112 (Karur District Police Control Room)</strong> and your 3 emergency contacts.
+      </p>
+      <div class="modal-actions-dual">
+        <button class="btn-modal-secondary" id="btn-close-sos">Dismiss</button>
+        <button class="btn-modal-danger" id="btn-confirm-sos">Broadcast 112</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- FLOATING IN-APP TOAST SYSTEM (NO NATIVE BROWSER ALERTS!)          -->
+  <!-- ================================================================= -->
+  <div class="app-toast-container" id="toast-container">
+    <div class="app-toast" id="app-toast">
+      <span class="toast-icon">✨</span>
+      <span class="toast-message" id="toast-message">Message text</span>
+    </div>
+  </div>
+
+  <!-- Leaflet Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
