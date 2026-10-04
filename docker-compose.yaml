@@ -1,0 +1,149 @@
+version: '3.8'
+
+# ==============================================================================
+# KARUR TAXI (கரூர் டாக்ஸி) - ZERO-COST PRODUCTION STACK FOR OCI ARM64 ALWAYS FREE
+# Hardware Budget: 4 OCPU Ampere A1, 24GB RAM, 200GB Block Storage
+# All microservices configured for arm64 / aarch64 native execution
+# ==============================================================================
+
+services:
+  # 1. PostgreSQL 16 with PostGIS 3.4
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: karur_taxi_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: karurtaxi_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_secure_pwd
+      # Tuned for 24GB RAM OCI Instance
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    command: >
+      postgres 
+      -c shared_buffers=4GB 
+      -c effective_cache_size=12GB 
+      -c work_mem=64MB 
+      -c maintenance_work_mem=512MB 
+      -c max_connections=200 
+      -c checkpoint_completion_target=0.9 
+      -c wal_buffers=16MB 
+      -c default_statistics_target=100 
+      -c random_page_cost=1.1
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+      - ./database/seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - karurtaxi_net
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
+  # 2. Redis 7 (In-Memory Pub/Sub & Geospatial Driver Registry)
+  redis:
+    image: redis:7-alpine
+    container_name: karur_taxi_redis
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 2gb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - karurtaxi_net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # 3. High-Performance Fastify Backend & WebSocket Engine
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: karur_taxi_backend
+    restart: always
+    environment:
+      PORT: "8080"
+      HOST: "0.0.0.0"
+      DATABASE_URL: "postgresql://postgres:postgres_secure_pwd@postgres:5432/karurtaxi_db"
+      REDIS_URL: "redis://redis:6379"
+      OSRM_URL: "http://osrm:5000"
+      PHOTON_URL: "http://photon:2322"
+      NODE_ENV: "production"
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8080:8080"
+    networks:
+      - karurtaxi_net
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+
+  # 4. Self-Hosted OSRM Routing Engine (Tamil Nadu Extract)
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: karur_taxi_osrm
+    restart: always
+    command: osrm-routed --algorithm mld /data/southern-zone-latest.osrm --max-table-size 1000 -t 4
+    volumes:
+      - ./osrm-data:/data
+    ports:
+      - "5000:5000"
+    networks:
+      - karurtaxi_net
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  # 5. Photon Geocoder (Komoot - Tamil Nadu OSM Search & Reverse Geocode)
+  photon:
+    image: ringo/photon:latest
+    container_name: karur_taxi_photon
+    restart: always
+    volumes:
+      - ./photon-data:/photon/photon_data
+    ports:
+      - "2322:2322"
+    networks:
+      - karurtaxi_net
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  # 6. Caddy Reverse Proxy (Auto Let's Encrypt SSL & Static Tile Caching)
+  caddy:
+    image: caddy:2-alpine
+    container_name: karur_taxi_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./admin_dashboard:/srv/admin:ro
+      - ./passenger_app/web_preview:/srv/preview:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+    networks:
+      - karurtaxi_net
+
+networks:
+  karurtaxi_net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
+  caddy_data:
+  caddy_config:
